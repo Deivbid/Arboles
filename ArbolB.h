@@ -1,6 +1,7 @@
 #ifndef ARBOLB_H
 #define ARBOLB_H
 
+#include "Cola.h"
 #include "Lista.h"
 #include "NodoA.h"
 
@@ -16,9 +17,16 @@ class ArbolB
 																						//void copy(NodoA<T> *original, NodoA<T> *&copia);
 		int calculoPeso(NodoA<T> *p);//utilizado en "hijoIzq y Der", calcula el peso del arbol
 																						//void destruir(NodoA<T> *&p);//Utilizado en borrar y destructor, destruye todo
-		NodoA<T> * lecturaPrIn(Lista<T> &Pre, Lista<T> In, int posi, int posf);//
+		NodoA<T> * lecturaPrIn(Lista<T> &Pre, Lista<T> In, int posi, int posf);//Utilizado en lecturaPrIn, lee a partir de 2 listas
 		void destruirD(NodoA<T> *p);
 		void print(int nivel, NodoA<T> *p);//Utilizado en imprimir, IMprime el arbol bien bonito
+		int alturaArbol(NodoA<T> *p);// calcula la altura del arbol
+		NodoA<T> * lecturaPosIn(Lista<T> &Pos, Lista<T> In, int posi, int posf);//Lectura con listas Posorden, Inorden
+		void recorridoPreorden(NodoA<T> *p, Lista<T> &Pre);//Recorre y guarda el Preorden en una lista 
+		void recorridoPosorden(NodoA<T> *p, Lista<T> &Pos);// Recorre y guarda el Posorden en una lista
+		void recorridoInorden(NodoA<T> *p, Lista<T> &Pos);//Recorre y guarda el Inorden
+		void recorridoNiveles(NodoA<T> *p, Lista<T> &Niv);
+
 	
 	public:
 		/*Cons / Des /tructor*/
@@ -26,22 +34,34 @@ class ArbolB
 		ArbolB(const ArbolB<T> &A);
 		~ArbolB();
 
-
+		//Retorno de data
 		bool esNulo();
 		int peso();
 		T obtRaiz();
 		ArbolB<T> hijoIzq();
 		ArbolB<T> hijoDer();
 		bool esHoja();
+		ArbolB<T> operator=(const ArbolB<T> &A);
+		int altura();
 
+		//Recorridos
+		Lista<T> Preorden();
+		Lista<T> Posorden();
+		Lista<T> Inorden();
+		Lista<T> Niveles();
+		Lista<T> Niveles_limites(int limi, int limif);
+
+		//void's
 		void insertarHi(const ArbolB<T> A); //NO DEBE TENER HIJO IZQ ANTES DE INSERTAR
 		void insertarHd(const ArbolB<T> A);	//LO MISMO PARA ESTE
 		void eliminarHi();
 		void eliminarHd();
 		void borrar();
-		void lecturaPrIn(Lista<T> L1, Lista<T> L2);
+		void lecturaPrIn(Lista<T> L1, Lista<T> L2);// LECTURA DE LISTAS PREORDEN , INORDEN
+		void lecturaPosIn(Lista<T> L1, Lista<T> L2);// LECTURA DE LISTAS POSORDEN, INORDEN
 		void imprimir();
-		ArbolB<T> operator=(const ArbolB<T> &A);
+
+		
 
 };
 
@@ -314,5 +334,187 @@ void ArbolB<T>::copy(NodoA<T> *original, NodoA<T> *&copia)
 		copia = NULL;
 	}
 }*/
+
+template <class T>
+int ArbolB<T>::altura()
+{
+	return this -> alturaArbol(this -> raiz);
+}
+
+template <class T>
+int ArbolB<T>::alturaArbol(NodoA<T> *p)
+{
+	int pi,pd;
+	
+	if(p != NULL)
+	{
+		pi = 1 + this -> alturaArbol(p -> obtHi());
+		pd = 1 + this -> alturaArbol(p -> obtHd());
+
+		if(pi > pd)
+		{
+			return pi;
+		}
+		else
+		{
+			return pd;
+		}
+	}
+	else
+	{
+		return -1;
+	}
+}
+
+template <class T>
+void ArbolB<T>::lecturaPosIn(Lista<T> L1, Lista<T> L2)
+{
+	L1.invertir();
+	this -> n = L1.longitud();
+	this -> raiz = this -> lecturaPosIn(L1,L2,1,L1.longitud());
+}
+
+template <class T>
+NodoA<T> * ArbolB<T>::lecturaPosIn(Lista<T> &Pos, Lista<T> In, int posi, int posf)
+{
+	T aux;
+	NodoA<T> *nuevo;
+
+	if(posi <= posf && !Pos.esVacia() )
+	{
+		aux = Pos.consultar(1);
+		Pos.eliminar(1);
+		nuevo = new NodoA<T> (aux);
+
+		nuevo -> modHd(lecturaPosIn(Pos, In, In.obtPos(aux) + 1, posf));
+		nuevo -> modHi(lecturaPosIn(Pos, In, posi, In.obtPos(aux) - 1));
+		return nuevo;
+	}
+	else
+	{
+		return NULL;
+	}
+}
+
+
+//RECORRIDOS
+
+template <class T>
+Lista<T> ArbolB<T>::Preorden()
+{
+	Lista<T> L;
+	if(!this -> esNulo())
+	{
+		this -> recorridoPreorden(this -> raiz, L);
+	}
+	L.invertir();
+	return L;
+}
+
+template <class T>
+void ArbolB<T>::recorridoPreorden(NodoA<T> *p, Lista<T> &Pre)
+{
+	if(p != NULL)
+	{
+		Pre.insertar(p -> obtInfo(), 1);
+		this -> recorridoPreorden(p -> obtHi(), Pre);
+		this -> recorridoPreorden(p -> obtHd(), Pre);
+	}
+}
+
+template <class T>
+Lista<T> ArbolB<T>::Posorden()
+{
+	Lista<T> L;
+	
+	if(!this -> esNulo())
+	{
+		this -> recorridoPosorden(this -> raiz, L);
+	}
+	
+	L.invertir();
+	
+	return L;
+}
+
+template <class T>
+void ArbolB<T>::recorridoPosorden(NodoA<T> *p, Lista<T> &Pos)
+{
+	if(p != NULL)
+	{
+		this -> recorridoPosorden(p -> obtHi(), Pos);
+		this -> recorridoPosorden(p -> obtHd(), Pos);
+		Pos.insertar(p -> obtInfo(), 1);
+	}
+}
+
+template <class T>
+Lista<T> ArbolB<T>::Inorden()
+{
+	Lista<T> L;
+	
+	if(!this -> esNulo())
+	{
+		this -> recorridoInorden(this -> raiz, L);
+	}
+	
+	L.invertir();
+	
+	return L;
+}
+
+template <class T>
+void ArbolB<T>::recorridoInorden(NodoA<T> *p, Lista<T> &In)
+{
+	if(p != NULL)
+	{
+		this -> recorridoInorden(p -> obtHi(), In);
+		In.insertar(p -> obtInfo(), 1);
+		this -> recorridoInorden(p -> obtHd(), In);
+	}
+}
+
+template <class T>
+Lista<T> ArbolB<T>::Niveles()
+{
+	Lista<T> L;
+	
+	if(!this -> esNulo())
+	{
+		this -> recorridoNiveles(this -> raiz, L);
+	}
+	
+	L.invertir();
+
+	return L;
+}
+
+template <class T>
+void ArbolB<T>::recorridoNiveles(NodoA<T> *p, Lista<T> &Niv)
+{
+	Cola< NodoA<T> * > C;
+	NodoA<T> *aux;
+
+	C.Encolar(p);
+
+	while(!C.esVacia())
+	{
+		aux = C.Obtfrente();
+		C.Desencolar();
+
+		if(aux -> obtHi() != NULL)
+		{
+			C.Encolar(aux -> obtHi());
+		}
+
+		if(aux -> obtHd() != NULL)
+		{
+			C.Encolar(aux -> obtHd());
+		}
+
+		Niv.insertar(aux -> obtInfo(), 1);
+	}
+}
+
 #endif
 
