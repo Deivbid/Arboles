@@ -3,6 +3,8 @@
 
 //LIBRERIA PROPIEDAD DE DAVID APARICIO 
 //LO MEJOR DEL FUTURO ES QUE NO SABES QUE ES LO QUE VA A PASAR .-DAVE
+
+//FALTA ISOMORFO , SEMEJANTE, IGUAL .... Y LOS TALLERES , HAZLOS TODOS ESAS ENTRADAS DE CARACTERES NO JUEGAN
 #include "Cola.h"
 #include "Lista.h"
 #include "NodoA.h"
@@ -45,6 +47,8 @@ class ArbolB
 		void menol(NodoA<T> *p, T &menor);//Determina el elemento mas pequeño del arbol y lo guarda en menor
 		void mayol(NodoA<T> *p, T &mayor);//Determina el elemento mas grande del arbol
 		bool esMenor(NodoA<T> *p, T menor);//Determina si todos los elementos del arbol son menores que "Menor"
+		void moverse(NodoA<T> *p, NodoA<T> **a1, T e);//Si p encuentra en el arbol el elemento "e" guarda la direccion en el apuntador a1
+		bool ocurre(NodoA<T> *a1, NodoA<T> *a2);//Determina si a1 y a2 son iguales en estructura y elementos
 
 
 
@@ -66,10 +70,12 @@ class ArbolB
 		bool esLleno();//Es lleno si es completo y aparte todos los nodos estan al mismo nivel
 		bool esDegenerado();//Determina si todos los nodos tienen exactamente un hijo
 		bool esMenor(const ArbolB<T> &A); // Determina si todos los elementos de THIS son menores que los elementos del arbol A
+		bool ocurre(const ArbolB<T> &A); // Determina si el arbol THIS ocurre en el arbol A, es decir, que tdos los elementos son iguales
 		int peso(); //Retorna el numero de nodos del arbol
 		int altura();//el numero de arcos desde la raiz a la hoja mas lejana
 		int talla();//el numero de nodos de la rama mas larga
 		int gordura();//Retorna el numero de nodos de el nivel mas "gordo" jeje 
+		int diametro();//Retorna el numero de arcos del camino mas largo entre todos los pares de nodos
 		T obtRaiz();// Retorna el contenido de la raiz
 		ArbolB<T> hijoIzq();//Retorna el subarbol izquierdo es decir su Hijo izquierdo 
 		ArbolB<T> hijoDer();//Retorna el subarbol derecho es decir su Hijo Derecho
@@ -1175,10 +1181,9 @@ bool ArbolB<T>::esMenor(const ArbolB<T> &A)
 	bool band;
 	T menor;
 
+	menor = 99999999; 
 	this -> menol(A.raiz, menor);
-	this -> esMenor(this -> raiz, band, menor);
-
-	return band;
+	return this -> esMenor(this -> raiz, menor);
 }
 
 template <class T>
@@ -1186,7 +1191,7 @@ void ArbolB<T>::menol(NodoA<T> *p, T &menor)
 {
 	if(p != NULL)
 	{
-		if(p -> obtinfo() < menor)
+		if(p -> obtInfo() < menor)
 		{
 			menor = p -> obtInfo();
 		}
@@ -1231,7 +1236,7 @@ bool ArbolB<T>::esMenor(NodoA<T> *p, T menor)
 		}
 		else
 		{
-			return esMenor(p -> obtHi(), menor) && esMenor(p -> obtHd()) && p -> obtInfo() < menor;
+			return esMenor(p -> obtHi(), menor) && esMenor(p -> obtHd(), menor) && p -> obtInfo() < menor;
 		}
 	}
 	else
@@ -1240,6 +1245,71 @@ bool ArbolB<T>::esMenor(NodoA<T> *p, T menor)
 	}
 }
 
-template
+template <class T>
+bool ArbolB<T>::ocurre(const ArbolB<T> &A)
+{
+	NodoA<T> *a1;
+
+	a1 = NULL;
+	this -> moverse(A.raiz, &a1, this -> obtRaiz());
+
+	if( a1 == NULL)
+	{
+		return false;
+	}
+	else
+	{
+		return this -> ocurre(this -> raiz, a1);
+	}
+}
+
+template <class T>
+void ArbolB<T>::moverse(NodoA<T> *p, NodoA<T> **a1, T e)
+{
+	if(p != NULL)
+	{
+		if(p -> obtInfo() == e)
+		{
+			*a1 = p;
+		}
+		else
+		{
+			this -> moverse(p -> obtHi(), a1, e);
+			this -> moverse(p -> obtHd(), a1, e);
+		}
+	}
+}
+
+template <class T>
+bool ArbolB<T>::ocurre(NodoA<T> *a1, NodoA<T> *a2)
+{
+	if(a1 == NULL)
+	{
+		if(a2 == NULL)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+	else
+	{
+		return this -> ocurre(a1 -> obtHi(), a2 -> obtHi()) && this -> ocurre(a1 -> obtHd(), a2 -> obtHd()) && a1 -> obtInfo() == a2 -> obtInfo();	
+	}
+}
+
+template <class T>
+int ArbolB<T>::diametro()
+{
+	int si, sd;
+
+	si = this -> alturaArbol(this -> raiz -> obtHi());
+	sd = this -> alturaArbol(this -> rai< -> obtHd());
+
+	return si + sd;
+}
+
 #endif
 
