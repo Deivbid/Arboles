@@ -1,6 +1,8 @@
 #ifndef ARBOLB_H
 #define ARBOLB_H
 
+//LIBRERIA PROPIEDAD DE DAVID APARICIO 
+//LO MEJOR DEL FUTURO ES QUE NO SABES QUE ES LO QUE VA A PASAR .-DAVE
 #include "Cola.h"
 #include "Lista.h"
 #include "NodoA.h"
@@ -37,7 +39,14 @@ class ArbolB
 		void esAVL(NodoA<T> *p, bool &band, int &min, int &max, int &peso); //Determina si el arbol es BB y esta balanceado
 		NodoA<T> * espejo(NodoA<T> *p);//Espejo pls
 		bool esCompleto(NodoA<T> *p);//Determina si el arbol es completo es decir que todos los nodos tienen o 0 o 2 hijos exactamente
-		
+		void esLleno(NodoA<T> *p, bool &band, int &lim);//Determina si es complto y tambien tiene todos los nodos al mismo nivel
+		void _recorridoNiveles(NodoA<T> *p, Lista<T> &L); // Recorre y almacena por niveles de derecha a izquierda
+		void esDegenerado(NodoA<T> *p, bool &band); //Determina si cada nodo del arbol solo tiene un hijo
+		void menol(NodoA<T> *p, T &menor);//Determina el elemento mas pequeño del arbol y lo guarda en menor
+		void mayol(NodoA<T> *p, T &mayor);//Determina el elemento mas grande del arbol
+		bool esMenor(NodoA<T> *p, T menor);//Determina si todos los elementos del arbol son menores que "Menor"
+
+
 
 	
 	public:
@@ -54,6 +63,9 @@ class ArbolB
 		bool esBB(); //Determina si el arbol es Binario de Busqueda
 		bool esAVL();//Determina si es Binario de Busqueda Balanceado
 		bool esCompleto();//Es completo si todos los nodos no terminales tienen exactamente 2 hijos
+		bool esLleno();//Es lleno si es completo y aparte todos los nodos estan al mismo nivel
+		bool esDegenerado();//Determina si todos los nodos tienen exactamente un hijo
+		bool esMenor(const ArbolB<T> &A); // Determina si todos los elementos de THIS son menores que los elementos del arbol A
 		int peso(); //Retorna el numero de nodos del arbol
 		int altura();//el numero de arcos desde la raiz a la hoja mas lejana
 		int talla();//el numero de nodos de la rama mas larga
@@ -63,11 +75,7 @@ class ArbolB
 		ArbolB<T> hijoDer();//Retorna el subarbol derecho es decir su Hijo Derecho
 		ArbolB<T> operator=(const ArbolB<T> &A); // Pls
 		ArbolB<T> espejo();//Retorna un Arbol espejo del pasado por parametro
-		Lista<T> frontera(); // Retorna lista con todos los nodos hoja del arbol 
-		
-		
-		
-
+		Lista<T> frontera(); // Retorna lista con todos los nodos hoja del arbol
 		//Recorridos
 		Lista<T> Preorden();
 		Lista<T> Posorden();
@@ -75,8 +83,8 @@ class ArbolB
 		Lista<T> Niveles();
 		Lista<T> Niveles_limites(int limi, int limif);
 		Lista<T> Posorden_invertido();
-
-
+		Lista<T> Niveles_invertido();//Devuelve La lista de niveles invertidos completamente de derecha a izquierda
+		Lista<T> Niveles_invertidoEV();// Devuelve los niveles invertidos VERSION EXAMEN es decir de derecha a izquierda pero de fin a principio
 		//void's
 		void insertarHi(const ArbolB<T> A); //NO DEBE TENER HIJO IZQ ANTES DE INSERTAR
 		void insertarHd(const ArbolB<T> A);	//LO MISMO PARA ESTE
@@ -1021,5 +1029,217 @@ bool ArbolB<T>::esCompleto(NodoA<T> *p)
 	}
 }
 
+template <class T>
+bool ArbolB<T>::esLleno()
+{
+	bool band;
+	int lim;
+
+	this -> esLleno(this -> raiz, band, lim);
+
+	return band;
+}
+
+template <class T>
+void ArbolB<T>::esLleno(NodoA<T> *p, bool &band, int &lim)
+{
+	bool bi, bd;
+	int si, sd;
+
+	if(p == NULL)
+	{
+		band = false;
+		lim = 0;
+	}
+	else
+	{
+		if(p -> obtHi() == NULL && p -> obtHd() == NULL)
+		{
+			band = true;
+			lim = 1;
+		}
+		else
+		{
+			this -> esLleno(p -> obtHi(), bi, si);
+			if(bi)
+			{
+				this -> esLleno(p -> obtHd(), bd, sd);
+			}
+
+			band = bi && bd && si == sd;
+			lim = si + 1;
+		}
+	}
+}
+
+template <class T>
+Lista<T> ArbolB<T>::Niveles_invertido()
+{
+	Lista<T> L;
+
+	if(!this -> esNulo())
+	{
+		this -> recorridoNiveles(this -> raiz, L);
+	}
+
+	return L;
+}
+
+template <class T>
+Lista<T> ArbolB<T>::Niveles_invertidoEV()
+{
+	Lista<T> L;
+
+	if(!this -> esNulo())
+	{
+		this -> _recorridoNiveles(this -> raiz, L);
+	}
+
+	return L;
+}
+
+template <class T>
+void ArbolB<T>::_recorridoNiveles(NodoA<T> *p, Lista<T> &L)
+{
+	Cola< NodoA<T> * > C;
+	NodoA<T> *aux;
+
+	C.Encolar(p);
+
+	while(!C.esVacia())
+	{
+		aux = C.Obtfrente();
+		C.Desencolar();
+
+		if(aux -> obtHd() != NULL)
+		{
+			C.Encolar(aux -> obtHd());
+		}
+
+		if(aux -> obtHi() != NULL)
+		{
+			C.Encolar(aux -> obtHi());
+		}
+
+		L.insertar(aux -> obtInfo(), 1);
+	}
+}
+
+template <class T>
+bool ArbolB<T>::esDegenerado()
+{
+	bool band;
+
+	this -> esDegenerado(this -> raiz, band);
+
+	return band;
+}
+
+template <class T>
+void ArbolB<T>::esDegenerado(NodoA<T> *p, bool &band)
+{
+	bool bi, bd;
+	if(p == NULL)
+	{
+		band = true;
+	}
+	else
+	{
+		if(p -> obtHi() == NULL && p -> obtHd() == NULL)
+		{
+			band = true;
+		}
+		else
+		{
+			if(p -> obtHi() != NULL && p -> obtHd() != NULL)
+			{
+				band = false;
+			}
+			else
+			{
+				this -> esDegenerado(p -> obtHi(), bi);
+				if(bi)
+				{
+					this -> esDegenerado(p -> obtHd(), bd);
+				}
+
+				band = bi && bd;
+			}
+		}
+	}
+}
+
+template <class T>
+bool ArbolB<T>::esMenor(const ArbolB<T> &A)
+{
+	bool band;
+	T menor;
+
+	this -> menol(A.raiz, menor);
+	this -> esMenor(this -> raiz, band, menor);
+
+	return band;
+}
+
+template <class T>
+void ArbolB<T>::menol(NodoA<T> *p, T &menor)
+{
+	if(p != NULL)
+	{
+		if(p -> obtinfo() < menor)
+		{
+			menor = p -> obtInfo();
+		}
+
+		this -> menol(p -> obtHi(), menor);
+		this -> menol(p -> obtHd(), menor);
+
+	}
+}
+
+template <class T>
+void ArbolB<T>::mayol(NodoA<T> *p, T &mayor)
+{
+	if(p != NULL)
+	{
+		if(p -> obtinfo() > mayor)
+		{
+			mayor = p -> obtInfo();
+		}
+
+		this -> menol(p -> obtHi(), mayor);
+		this -> menol(p -> obtHd(), mayor);
+		
+	}
+}
+
+template <class T>
+bool ArbolB<T>::esMenor(NodoA<T> *p, T menor)
+{
+	if(p != NULL)
+	{
+		if(p -> obtHi() == NULL && p -> obtHd() == NULL)
+		{
+			if(p -> obtInfo() < menor)
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+		else
+		{
+			return esMenor(p -> obtHi(), menor) && esMenor(p -> obtHd()) && p -> obtInfo() < menor;
+		}
+	}
+	else
+	{
+		return true;
+	}
+}
+
+template
 #endif
 
