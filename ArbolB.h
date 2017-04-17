@@ -30,7 +30,7 @@ class ArbolB
 		void recorridoPosorden(NodoA<T> *p, Lista<T> &Pos);// Recorre y guarda el Posorden en una lista
 		void recorridoInorden(NodoA<T> *p, Lista<T> &Pos);//Recorre y guarda el Inorden
 		void recorridoNiveles(NodoA<T> *p, Lista<T> &Niv);//Recorre y guarda por niveles 
-		void recorridoLimitado(NodoA<T> *p, Lista<T> &Lim, int inicio, int fin); // Recorre y guarda dependiendo de los limites si existen
+		void recorridoLimitado(NodoA<T> *p, Lista<T> &Lim, int nivel); // Recorre y guarda dependiendo de los limites si existen
 		void _recorridoPosorden(NodoA<T> *p, Lista<T> &Pos);// Recorre y guarda el Posorden invertido en una lista
 		void piramide(NodoA<T> *p, bool &band, int &suma);//Devuelve un booleano diciendo si es piramido o no, piramide = la suma de los hijos es igual al padre
 		void frontera(NodoA<T> *p, Lista<T> &L);//Devuelve todos los nodos Hoja del arbol en la lista L
@@ -49,6 +49,9 @@ class ArbolB
 		bool esMenor(NodoA<T> *p, T menor);//Determina si todos los elementos del arbol son menores que "Menor"
 		void moverse(NodoA<T> *p, NodoA<T> **a1, T e);//Si p encuentra en el arbol el elemento "e" guarda la direccion en el apuntador a1
 		bool ocurre(NodoA<T> *a1, NodoA<T> *a2);//Determina si a1 y a2 son iguales en estructura y elementos
+		bool esIsomorfo(NodoA<T> *a1, NodoA<T> *a2);//Determina si son iguales en estructura solamente
+		NodoA<T> * sinFronteras(NodoA<T> *p); //Elimina la frontera del arbol es decir todos sus nodos Hoja del momento
+
 
 
 
@@ -71,16 +74,23 @@ class ArbolB
 		bool esDegenerado();//Determina si todos los nodos tienen exactamente un hijo
 		bool esMenor(const ArbolB<T> &A); // Determina si todos los elementos de THIS son menores que los elementos del arbol A
 		bool ocurre(const ArbolB<T> &A); // Determina si el arbol THIS ocurre en el arbol A, es decir, que tdos los elementos son iguales
+		bool esIsomorfo(const ArbolB<T> &A);//Determina si la raiz y el arbol A son isomorfos, es decir, que tienen la misma estructura
+		bool esSemejante(const ArbolB<T> &A);//Determinasi dos arboles tienen los mismos elementos
+		bool esIgual(const ArbolB<T> &A);//Determina si los arboles son iguales
+		bool operator==(const ArbolB<T> &A);//PLS
 		int peso(); //Retorna el numero de nodos del arbol
 		int altura();//el numero de arcos desde la raiz a la hoja mas lejana
 		int talla();//el numero de nodos de la rama mas larga
 		int gordura();//Retorna el numero de nodos de el nivel mas "gordo" jeje 
 		int diametro();//Retorna el numero de arcos del camino mas largo entre todos los pares de nodos
 		T obtRaiz();// Retorna el contenido de la raiz
+		T mayor();//Retorna el elemento mas "Grande" del arbol
+		T menor();//Retorna el elemento mas "Pequeño" del arbol
 		ArbolB<T> hijoIzq();//Retorna el subarbol izquierdo es decir su Hijo izquierdo 
 		ArbolB<T> hijoDer();//Retorna el subarbol derecho es decir su Hijo Derecho
 		ArbolB<T> operator=(const ArbolB<T> &A); // Pls
 		ArbolB<T> espejo();//Retorna un Arbol espejo del pasado por parametro
+		ArbolB<T> sinFronteras();//Retorna el mismo arbol sin ninguna de sus hojas
 		Lista<T> frontera(); // Retorna lista con todos los nodos hoja del arbol
 		//Recorridos
 		Lista<T> Preorden();
@@ -277,8 +287,11 @@ ArbolB<T>::~ArbolB()
 template <class T>
 void ArbolB<T>::lecturaPrIn(Lista<T> Pre, Lista<T> In)
 {
-	this -> n = Pre.longitud();
-	this -> raiz = lecturaPrIn(Pre,In,1,Pre.longitud());
+	if(!Pre.esVacia())
+	{
+		this -> n = Pre.longitud();
+		this -> raiz = lecturaPrIn(Pre,In,1,Pre.longitud());
+	}
 }
 
 template <class T>
@@ -409,9 +422,13 @@ int ArbolB<T>::alturaArbol(NodoA<T> *p)
 template <class T>
 void ArbolB<T>::lecturaPosIn(Lista<T> L1, Lista<T> L2)
 {
-	L1.invertir();
-	this -> n = L1.longitud();
-	this -> raiz = this -> lecturaPosIn(L1,L2,1,L1.longitud());
+	if(!L1.esVacia())
+	{
+
+		L1.invertir();
+		this -> n = L1.longitud();
+		this -> raiz = this -> lecturaPosIn(L1,L2,1,L1.longitud());
+	}
 }
 
 template <class T>
@@ -559,7 +576,7 @@ void ArbolB<T>::recorridoNiveles(NodoA<T> *p, Lista<T> &Niv)
 template <class T>
 Lista<T> ArbolB<T>::Niveles_limites(int posi, int posf)
 {
-	int alt;
+	int alt, i;
 	Lista<T> L;
 
 	alt = this -> altura();
@@ -568,11 +585,18 @@ Lista<T> ArbolB<T>::Niveles_limites(int posi, int posf)
 	{
 		if(posi > posf)
 		{
-			this -> recorridoLimitado(this -> raiz, L, posf, posi);
+			for(i = posf ; i <= posi; i++)
+			{
+				this -> recorridoLimitado(this -> raiz, L, i);
+			}
+		
 		}
 		else
 		{
-			this -> recorridoLimitado(this -> raiz, L, posi, posf);
+			for(i = posi ; i <= posf; i++)
+			{
+				this -> recorridoLimitado(this -> raiz, L, i);
+			}
 		}
 	}
 
@@ -582,72 +606,20 @@ Lista<T> ArbolB<T>::Niveles_limites(int posi, int posf)
 }
 
 template <class T>
-void ArbolB<T>::recorridoLimitado(NodoA<T> *p, Lista<T> &Lim, int inicio, int fin)
-{
-	Cola< NodoA<T> * > C;
-	int i, aux, j;
-
-	i = 0;
-	aux = 1;
-
-	C.Encolar(p);
-	while(i < inicio)
+void ArbolB<T>::recorridoLimitado(NodoA<T> *p, Lista<T> &Lim, int nivel) //LA VERSION ORIGINAL TENIA UN PROBLEMA CON LA ESTRUCTURA DEL ARBOL
+{																					//ESTA ES MAS IEFICIENTE PERO FUNCIONA SEGURO
+	if(p != NULL)
 	{
-		for(j = 0 ; j < aux ; j++)
+		if(nivel == 0)
 		{
-			p = C.Obtfrente();
-
-			if(p -> obtHi() != NULL)
-			{
-				C.Encolar(p -> obtHi());
-			}
-
-			if(p -> obtHd() != NULL)
-			{
-				C.Encolar(p -> obtHd());
-			}
-
-			C.Desencolar();
+			Lim.insertar( p -> obtInfo(), 1);
 		}
-
-		aux = aux * 2;
-		i++;
-	}
-
-	i = fin - inicio ;
-	
-	while(i != 0)
-	{
-		for(j = 0 ; j < aux ; j++)
+		else
 		{
-			p = C.Obtfrente();
-			
-			Lim.insertar(p -> obtInfo(), 1);
-
-			if(p -> obtHi() != NULL)
-			{
-				C.Encolar(p -> obtHi());
-			}
-
-			if(p -> obtHd() != NULL)
-			{
-				C.Encolar(p -> obtHd());
-			}
-
-			C.Desencolar();
+			this -> recorridoLimitado(p -> obtHi(), Lim, nivel - 1);
+			this -> recorridoLimitado(p -> obtHd(), Lim, nivel - 1);
 		}
-
-		aux = aux * 2;
-		i--;
 	}
-
-	while(!C.esVacia())
-	{
-		p = C.Obtfrente();
-		Lim.insertar(p -> obtInfo(), 1);
-		C.Desencolar();
-	}
-
 }
 
 template <class T>
@@ -1181,7 +1153,7 @@ bool ArbolB<T>::esMenor(const ArbolB<T> &A)
 	bool band;
 	T menor;
 
-	menor = 99999999; 
+	menor = A.raiz -> obtInfo(); 
 	this -> menol(A.raiz, menor);
 	return this -> esMenor(this -> raiz, menor);
 }
@@ -1283,9 +1255,9 @@ void ArbolB<T>::moverse(NodoA<T> *p, NodoA<T> **a1, T e)
 template <class T>
 bool ArbolB<T>::ocurre(NodoA<T> *a1, NodoA<T> *a2)
 {
-	if(a1 == NULL)
+	if(a1 == NULL || a2 == NULL)
 	{
-		if(a2 == NULL)
+		if(a1 == NULL && a2 == NULL)
 		{
 			return true;
 		}
@@ -1306,9 +1278,177 @@ int ArbolB<T>::diametro()
 	int si, sd;
 
 	si = this -> alturaArbol(this -> raiz -> obtHi());
-	sd = this -> alturaArbol(this -> rai< -> obtHd());
+	sd = this -> alturaArbol(this -> raiz -> obtHd());
 
 	return si + sd;
+}
+
+template <class T>
+T ArbolB<T>::mayor()
+{
+	T e;
+
+	e = -999999;
+
+	this -> mayol(this -> raiz, e);
+
+	return e;
+
+}
+
+template <class T>
+T ArbolB<T>::menor()
+{
+	T e;
+
+	e = 999999;
+
+	this -> menol(this -> raiz, e);
+
+	return e;
+
+}
+
+template <class T>
+bool ArbolB<T>::esIsomorfo(const ArbolB<T> &A)
+{
+	if(this -> raiz == NULL && A.raiz == NULL)
+	{
+		return true;
+	}
+	else
+	{
+		return this -> esIsomorfo(this -> raiz, A.raiz);
+	}
+
+}
+
+template <class T>
+bool ArbolB<T>::esIsomorfo(NodoA<T> *a1, NodoA<T> *a2)
+{
+	if(a1 == NULL || a2 == NULL)
+	{
+		if(a1 == NULL && a2 == NULL)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+	else
+	{
+		return this -> esIsomorfo(a1 -> obtHi(), a2 -> obtHi()) && this -> esIsomorfo(a1 -> obtHd(), a2 -> obtHd());
+	}
+}
+
+template <class T>
+bool ArbolB<T>::esSemejante(const ArbolB<T> &A)
+{
+	Lista<T> L1, L2;
+	bool flag;
+	T e;
+	
+	if(this -> raiz == NULL && A.raiz == NULL)
+	{
+		return true;
+	}
+	else
+	{
+		this -> _recorridoPosorden(this -> raiz, L1);
+		this -> _recorridoPosorden(A.raiz, L2);
+
+		
+		if(L1.longitud() == L2.longitud()) //INTERPRETACION , ES DECIR PUDIESE "OCURRIR", PREGUNTAR
+		{
+			flag = true;
+
+			while(flag && !L2.esVacia() )
+			{
+				e = L2.consultar(1);
+				
+				if(!L1.esta(e))
+				{
+					flag = false;
+				}
+
+				L2.eliminar(1);
+			}
+
+			return !flag;
+		}
+		else
+		{
+			return false;
+		}
+	}
+}
+
+template <class T>
+bool ArbolB<T>::esIgual(const ArbolB<T> &A)
+{
+	return this -> ocurre(this -> raiz, A.raiz);
+}
+
+template <class T>
+bool ArbolB<T>::operator==(const ArbolB<T> &A)
+{
+	return this -> esIgual(A);
+}
+
+template <class T>
+ArbolB<T> ArbolB<T>::sinFronteras()
+{
+	ArbolB<T> Copia;
+
+
+	
+		Copia.raiz = this -> sinFronteras(this -> raiz);
+		Copia.n = this -> n;
+		return Copia;
+	
+}
+
+/*template <class T>
+void ArbolB<T>::sinFronteras(NodoA<T> *p)
+{
+	if(p != NULL)
+	{
+		if(p -> obtHi() == NULL && p -> obtHd() == NULL)
+		{
+			delete p;
+			p = NULL;
+		}
+		else
+		{
+			this -> sinFronteras(p -> obtHi());
+			this -> sinFronteras(p -> obtHd());
+		}
+	}
+}*/
+
+template <class T>
+NodoA<T> * ArbolB<T>::sinFronteras(NodoA<T> *p)
+{	
+	NodoA<T> *nuevo;
+
+	if(p != NULL)
+	{
+		if(p -> obtHi() == NULL && p -> obtHd() == NULL)
+		{
+			return NULL;
+		}
+		else
+		{
+			nuevo = new NodoA<T> (p -> obtInfo(), sinFronteras(p -> obtHi()), sinFronteras(p -> obtHd()));
+			return nuevo;
+		}
+	}
+	else
+	{
+		return NULL;
+	}
 }
 
 #endif
