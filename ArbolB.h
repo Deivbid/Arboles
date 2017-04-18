@@ -2,12 +2,12 @@
 #define ARBOLB_H
 
 //LIBRERIA PROPIEDAD DE DAVID APARICIO 
-//LO MEJOR DEL FUTURO ES QUE NO SABES QUE ES LO QUE VA A PASAR .-DAVE
 
-//FALTA ISOMORFO , SEMEJANTE, IGUAL .... Y LOS TALLERES , HAZLOS TODOS ESAS ENTRADAS DE CARACTERES NO JUEGAN
 #include "Cola.h"
 #include "Lista.h"
 #include "NodoA.h"
+#include <string>
+#include <iostream>
 
 template <class T>
 class ArbolB
@@ -51,11 +51,21 @@ class ArbolB
 		bool ocurre(NodoA<T> *a1, NodoA<T> *a2);//Determina si a1 y a2 son iguales en estructura y elementos
 		bool esIsomorfo(NodoA<T> *a1, NodoA<T> *a2);//Determina si son iguales en estructura solamente
 		NodoA<T> * sinFronteras(NodoA<T> *p); //Elimina la frontera del arbol es decir todos sus nodos Hoja del momento
+		void esMovil(NodoA<T> *p, bool &band, int &dif); //Determina si la diferencia de los elementos difieren en 1 , es como piramide pero distinto
+		NodoA<T> * lecturaSintaxisPos(Lista<T> &Pos, Lista<T> In, int posi, int posf);//Lectura especial para el arbol de sintaxis
+		//NodoA<T> * lecturaSintaxisPos(Lista<T> &Pos, Lista<T> In, Lista<T> P);//Errores con los indices, lo dejare porque inverti mucho tiempo en el
+		NodoA<T> * lecturaSintaxisPre(Lista<T> &Pre, Lista<T> In, int posi, int posf);
+		float operar(float op1, float op2, string operador); // Opera op1 y op2 con operador que son cadenas, para el arbol de sintaxis
+		void evaluar(NodoA<T> *p, float &resultado);//evalua un arbol de sintaxis, asumiendo que el arbol es completo 
+		bool estamos(NodoA<T> *p, T e);// si esta entonces true sino no
+
+		//Las lecturas de los arboles de sintaxis me costaron mucho :( las dejare comentadas porque les inverti mucho tiempo
+		//sin embargo solo ocupan lineas de codigo, no estan siendo utiles realmente esas primeras versiones, las recordare :)
 
 
 
 
-	
+	//Metodos para el usuario
 	public:
 		/*Cons / Des /tructor*/
 		ArbolB();
@@ -78,6 +88,8 @@ class ArbolB
 		bool esSemejante(const ArbolB<T> &A);//Determinasi dos arboles tienen los mismos elementos
 		bool esIgual(const ArbolB<T> &A);//Determina si los arboles son iguales
 		bool operator==(const ArbolB<T> &A);//PLS
+		bool esMovil();//Evalua si la diferencia de la suma de todos los elementos del arbol es de 1
+		bool esta(T e);//Retorna verdadero si el elemento esta en el arbol
 		int peso(); //Retorna el numero de nodos del arbol
 		int altura();//el numero de arcos desde la raiz a la hoja mas lejana
 		int talla();//el numero de nodos de la rama mas larga
@@ -86,6 +98,7 @@ class ArbolB
 		T obtRaiz();// Retorna el contenido de la raiz
 		T mayor();//Retorna el elemento mas "Grande" del arbol
 		T menor();//Retorna el elemento mas "Pequeño" del arbol
+		float evaluar();
 		ArbolB<T> hijoIzq();//Retorna el subarbol izquierdo es decir su Hijo izquierdo 
 		ArbolB<T> hijoDer();//Retorna el subarbol derecho es decir su Hijo Derecho
 		ArbolB<T> operator=(const ArbolB<T> &A); // Pls
@@ -109,6 +122,8 @@ class ArbolB
 		void borrar();
 		void lecturaPrIn(Lista<T> L1, Lista<T> L2);// LECTURA DE LISTAS PREORDEN , INORDEN, NO DEBEN TENER ELEMENTOS REPETIDOS
 		void lecturaPosIn(Lista<T> L1, Lista<T> L2);// LECTURA DE LISTAS POSORDEN, INORDEN, NO DEBEN TENER ELEMENTOS REPETIDOS
+		void lecturaSintaxisPre(Lista<T> L1, Lista<T> L2);//Lectura especial para el arbol de sintaxis
+		void lecturaSintaxisPos(Lista<T> L1, Lista<T> L2);
 		void imprimir();
 
 		
@@ -1448,6 +1463,302 @@ NodoA<T> * ArbolB<T>::sinFronteras(NodoA<T> *p)
 	else
 	{
 		return NULL;
+	}
+}
+
+template <class T>
+bool ArbolB<T>::esMovil()
+{
+	bool band;
+	int dif;
+
+	this -> esMovil(this -> raiz, band, dif);
+
+	return band;
+}
+
+template <class T>
+void ArbolB<T>::esMovil(NodoA<T> *p, bool &band, int &dif)
+{
+	int si, sd;
+	bool bi, bd;
+
+	if(p == NULL)
+	{
+		band = true;
+		dif = 0;
+	}
+	else
+	{
+		if(p -> obtHi() == NULL && p -> obtHd() == NULL)
+		{
+			band = true;
+			dif = p -> obtInfo();
+		}
+		else
+		{
+			this -> esMovil(p -> obtHi(), bi, si);
+
+			if(bi)
+			{
+				this -> esMovil(p -> obtHd(), bd, sd);
+			}
+
+			band = bi && bd && abs(si - sd) == 1;
+			dif = si + sd + p -> obtInfo();
+		}
+	}
+}
+
+template <class T>
+void ArbolB<T>::lecturaSintaxisPre(Lista<T> L1, Lista<T> L2)
+{
+	Lista<T> Pizq, Pder, Iizq, Ider;
+	T e;
+	if(!L1.esVacia())
+	{
+
+		
+		e = L1.consultar(1);
+		
+		this -> n = L1.longitud();
+		this -> raiz = new NodoA<T> (e);
+		
+		Iizq = L2.sublista(1, L2.obtPos(e) - 1);
+		Ider = L2.sublista(L2.obtPos(e) + 1, L2.longitud());
+
+		Pizq = L1.sublista(2, Iizq.longitud() + 1);
+		Pder = L1.sublista(Pizq.longitud() + 2, L1.longitud());
+
+		this -> raiz -> modHi(lecturaSintaxisPre(Pizq, Iizq, 1, Pizq.longitud()));
+		this -> raiz -> modHd(lecturaSintaxisPre(Pder, Ider, 1, Pder.longitud()));
+
+	}
+}
+
+template <class T>
+NodoA<T> * ArbolB<T>::lecturaSintaxisPre(Lista<T> &Pre, Lista<T> In, int posi, int posf)
+{
+	T aux;
+	NodoA<T> *nuevo;
+	int save;
+	
+	if(posi <= posf && !Pre.esVacia())
+	{
+		aux = Pre.consultar(1);
+		Pre.eliminar(1);
+		save = In.obtPos(aux);
+		nuevo = new NodoA<T> (aux, lecturaSintaxisPre(Pre,In,posi,save - 1), lecturaSintaxisPre(Pre,In, save + 1, posf));
+		return nuevo;
+	}
+	else
+	{
+		return NULL;
+	}	
+}
+
+
+template <class T>
+void ArbolB<T>::lecturaSintaxisPos(Lista<T> L1, Lista<T> L2)
+{
+	Lista<T> Pizq, Pder, Iizq, Ider;
+	T e;
+	if(!L1.esVacia())
+	{
+
+		L1.invertir();
+		e = L1.consultar(1);
+		
+		this -> n = L1.longitud();
+		this -> raiz = new NodoA<T> (e);
+		
+		Iizq = L2.sublista(1, L2.obtPos(e) - 1);
+		Ider = L2.sublista(L2.obtPos(e) + 1, L2.longitud());
+
+		Pizq = L1.sublista(2, Ider.longitud() + 1);
+		Pder = L1.sublista(Pizq.longitud() + 2, L1.longitud());
+
+		
+
+		this -> raiz -> modHd(lecturaSintaxisPos(Pizq, Ider, 1, Pizq.longitud()));
+		this -> raiz -> modHi(lecturaSintaxisPos(Pder, Iizq, 1, Pder.longitud()));
+
+	}
+}
+
+template <class T>
+NodoA<T> * ArbolB<T>::lecturaSintaxisPos(Lista<T> &Pos, Lista<T> In, int posi, int posf)
+{
+	T aux;
+	NodoA<T> *nuevo;
+	int save;
+
+	if(posi <= posf && !Pos.esVacia() )
+	{
+		aux = Pos.consultar(1);
+		Pos.eliminar(1);
+		nuevo = new NodoA<T> (aux);
+		save = In.obtPos(aux);
+		
+
+		nuevo -> modHd(lecturaSintaxisPos(Pos, In, save + 1, posf));
+		nuevo -> modHi(lecturaSintaxisPos(Pos, In, posi, save - 1));
+		return nuevo;
+	}
+	else
+	{
+		return NULL;
+	}
+}
+
+/*template <class T>
+void ArbolB<T>::lecturaSintaxisPos(Lista<T> L1, Lista<T> L2)
+{
+	Lista<T> Pizq, Pder, Iizq, Ider;
+	T rais;
+
+	rais = L1.consultar(L1.longitud());
+	this -> raiz -> modInfo(rais);
+	Iizq = L2.sublista(1, L2.obtPos(rais) - 1);
+	Ider = L2.sublista(L2.obtPos(rais) + 1, L2.longitud());
+
+	this -> raiz = this -> lecturaSintaxisPos(L1, L2, Pizq);
+	
+}
+
+template <class T>
+NodoA<T> * ArbolB<T>::lecturaSintaxisPos(Lista<T> &Pos, Lista<T> In, Lista<T> P)
+{
+	NodoA<T> *nuevo;
+	T aux;
+	int lim;
+	Lista<T> izq, der;
+
+	if(!In.esVacia())
+	{
+		aux = Pos.consultar(1);
+		Pos.eliminar(1);
+
+		lim = In.obtPos(aux);
+		izq = In.sublista(1, lim - 1);
+		der = In.sublista(lim + 1, In.longitud());
+
+		nuevo = new NodoA<T> (aux);
+		nuevo -> modHd(lecturaSintaxisPos(Pos, der, izq));
+		nuevo -> modHi(lecturaSintaxisPos(Pos, izq, der));
+		return nuevo;
+
+
+	}
+	else
+	{
+		return NULL;
+	}
+}*/
+
+
+template <class T>
+float ArbolB<T>::evaluar()
+{
+	float resultado;
+
+	if(this -> esNulo())
+	{
+		return 0;
+	}
+	else
+	{
+		this -> evaluar(this -> raiz, resultado);
+
+		return resultado;
+	}
+}
+
+template <class T>
+void ArbolB<T>::evaluar(NodoA<T> *p, float &resultado) //ASUMIENDO QUE EL ARBOL ES COMPLETO
+{
+	float si, sd;
+
+	if(p -> obtHi() == NULL && p -> obtHd() == NULL)
+	{
+		resultado = atof(p -> obtInfo().c_str());//INCREIBLE ESTA FUNCION CAMBIA DE STRING A FLOAT 
+	}
+	else
+	{
+		this -> evaluar(p -> obtHi(), si);
+		this -> evaluar(p -> obtHd(), sd);
+
+		resultado = operar(si, sd, p -> obtInfo());
+	}
+}
+
+template <class T>
+float ArbolB<T>::operar(float op1, float op2, string operador)
+{
+	float p1, p2, aux;
+
+	/*p1 = atof(op1.c_str());
+	p2 = atof(op2.c_str());*/
+
+	if(operador == "+")
+	{
+		aux = op1 + op2;
+	}
+
+	if(operador == "-")
+	{
+		aux = op1 - op2;
+	}
+
+	if(operador == "/")
+	{
+		aux = op1 / op2;
+	}
+
+	if(operador == "*")
+	{
+		aux = op1 * op2;
+	}
+
+	return aux;
+}
+
+template <class T>
+bool ArbolB<T>::esta(T e)
+{
+	bool band;
+
+	if(this -> esNulo())
+	{
+		
+		return false;
+	}
+	else
+	{
+		return this -> estamos(this -> raiz, e);
+	}
+	
+	
+}
+
+template <class T>
+bool ArbolB<T>::estamos(NodoA<T> *p, T e)
+{
+	if(p != NULL)
+	{
+		if(p -> obtInfo() == e)
+		{
+			return true;
+		}
+		else
+		{
+
+			return this -> estamos(p -> obtHi(), e) || this -> estamos(p -> obtHd(), e);
+		}
+	}
+	else
+	{
+		return false;
 	}
 }
 
